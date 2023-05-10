@@ -1,0 +1,165 @@
+= README
+Sebastian Flügge <seflue@web.de>
+3.0, July 29, 2022: AsciiDoc article template
+:toc:
+:icons: font
+:url-quickref: https://docs.asciidoctor.org/asciidoc/latest/syntax-quick-reference/
+
+== Task: Design and Implement Network Components
+
+In the Long Term Evolution (LTE) network there are three basic components. These are UserEquipment Equipment (UE), Home Subscriber Server (HSS) and Base Stations (BS). This project covers software design and implementation of the basic implementation of these components.
+
+[plantuml, target=components, format=png]
+....
+left to right direction
+component UE {
+   [CPClient]
+   [UPClient]
+}
+component BS {
+   [CPServer]
+   [UPServer]
+}
+[CPClient] --> CPServer : Control Plane
+[UPClient] --> UPServer : UserEquipment Plane
+[CPServer] --> [HSS] : queries
+....
+
+
+=== Information on UEs
+A UE has both a user plane and controlBand plane to connect to the base station. For the controlBand
+plane communication UE sends the messages below:
+
+1. Paging message to inform the base stations that UE is passive around. (periodical message)
+2. Connection/Handover Request to connect to the BS and start data transfer. (UE is active)
+3. Connection Release Request to end data transfer.
+4. Measurement Result to send signal strength values measured from each BS around. The UE
+will try to connect the BS which has the strongest signal strength value. (periodical message)
+
+Control Plane messaging shall be transferred via gRPC Protocol. For more information please check https://grpc.io/docs/languages/cpp/[here].
+
+==== Sequence Diagram
+
+[plantuml, target=sequence-connection, format=png]
+....
+participant UE
+participant BS
+database HSS
+UE --> BS : paging
+activate BS
+BS --> UE : measurement result
+deactivate BS
+UE --> BS : connection/handover request
+activate BS
+BS --> HSS : authenticate (multiple requests)
+BS --> UE : success
+deactivate BS
+UE -> BS : UDP transfer
+activate BS #lightgreen
+BS --> HSS : log connection
+UE --> BS : connection release request
+BS --> HSS : log disconnect
+BS --> UE : Success or timeout
+deactivate BS
+....
+
+==== UE Design
+
+===== Simple Solution
+
+====== Basic idea
+
+An application loop invokes all necessary methods in a sequence.
+
+```Cpp
+while(true)
+{
+   updateBSInfo();
+   sendUserData();
+}
+```
+
+To send periodic messages, a timer gets started and is checked in every iteration of the main loop, if it has expired. The timer internally just stores a timestamp. `isExpired` just measures the delta between the stored timestamp and the current time and checks, if it is greater than a defined period. Reset sets the timestamp to the current time.
+
+When the timer is exceeded, a paging message is sent. This behavior could be encapsulated behind `updateBSInfo`.
+
+To actually send user data, we need to know, if there is data, which actually needs to be sent. Depending on the connection state and the available BS information, a UDP connection can be established and data gets sent. This behavior is encapsulated behind `sendUserData`.
+
+To close all connections on shutdown of UE, the signals need to be catched and a callback which handles the graceful shutdown needs to be registered.
+
+```Cpp
+void graceful_shutdown(int signum) {
+    // close all existing connections
+    exit(signum);
+}
+
+signal(SIGINT, graceful_shutdown);
+signal(SIGTERM, graceful_shutdown);
+```
+
+===== Diagrams (WIP)
+
+[plantuml, target=class-ue, format=png]
+....
+class Timer {
+  isExpired()
+  reset()
+}
+
+Interface UDPClient {
+connect()
+disconnect()
+}
+....
+
+[plantuml, target=sequence-m-to-n, format=png]
+....
+participant UE1
+participant UE2
+participant UE3
+participant BS1
+participant BS2
+database HSS
+UE1 -[#red]> BS1 : paging
+BS1 -[#red]> UE1 : measurement result
+UE1 -[#orange]> BS2 : paging
+BS2 -[#orange]> UE1 : measurement result
+UE2 -[#green]> BS1 : paging
+BS1 -[#green]> UE2 : measurement result
+UE2 -[#lightgreen]> BS2 : paging
+BS2 -[#lightgreen]> UE2 : measurement result
+UE3 -[#blue]> BS1 : paging
+BS1 -[#blue]> UE3 : measurement result
+UE3 -[#lightblue]> BS2 : paging
+BS2 -[#lightblue]> UE3 : measurement result
+....
+
+UserEquipment plane will be created after the Handover Request Message accepted by Base Station. For the user plane communication, UE uses UserEquipment Datagram Protocol (UDP). After the connection request is accepted and connection is established successfully, UE could start sending UserEquipment Plane Data like Voice Call, Video Streaming etc. To emulate this transfer, a webcam or a voice file could be used to stream this data and save it as a file on the BS.
+
+=== Information on HSS
+HSS is the central subscriber database in LTE mobile networks. This database has the information below and each information is specific to one user:
+
+1. The subscriber's phone number,
+2. The mobile phone identification of the participant (IMSI),
+3. Keys required to authenticate the participant, and
+4. Cellular networks (BSs) with which the subscriber is allowed to make calls.
+
+The time when the user connects and disconnects from the base station must be recorded in HSS. UE does not have direct connection to HSS. HSS can only have connections with BS.
+
+Things to consider:
+
+1. If one UE is a subscriber of Vodafone, it cannot establish a connection to the BS belonging
+to Deutsche Telekom infrastructure.
+2. Multiple UEs could establish connections to the BS and HSS simultaneously.
+3. The Connection Request message shall include UEID which is different from IMSI. IMSI is
+encrypted in the message and cannot be decrypted in BS. Only HSS can decrypt it. UEID is
+a UE specific information and it should be located in each message that BS could
+understand the relation between UE and HSS. (not must)
+4. The UE might have different kinds of agreements like prioritization. (not must)
+
+Content entered directly below the header but before the first section heading is called the preamble.
+
+== System Design
+
+=== Components
+=== Communication

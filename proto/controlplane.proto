@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package control;
+
+service ControlService {
+  rpc Scan (ScanRequest) returns (ScanReply) {}
+  rpc Connect (ConnectionRequest) returns (ConnectionReply) {}
+}
+
+message ScanRequest {
+  string Ueid = 1;
+}
+
+message ScanReply {
+  string Quality = 1;
+}
+
+message ConnectionRequest {
+  string Ueid = 1;
+}
+
+message ConnectionReply {
+  bool Success = 1;
+  string Error = 2;
+}

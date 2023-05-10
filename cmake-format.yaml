@@ -1,0 +1,17 @@
+additional_commands:
+  protobuf_generate:
+    flags:
+      - APPEND_PATH
+    kwargs:
+      LANGUAGE: '1'
+      OUT_VAR: '1'
+      EXPORT_MACRO: '1'
+      PROTOC_OUT_DIR: '1'
+      PLUGIN: '1'
+      PLUGIN_OPTIONS: '1'
+      DEPENDENCIES: '1'
+      TARGET: '1'
+      PROTOS: '*'
+      IMPORT_DIRS: '*'
+      GENERATE_EXTENSIONS: '*'
+      PROTOC_OPTIONS: '*'
