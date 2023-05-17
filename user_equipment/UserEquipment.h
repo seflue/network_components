@@ -50,7 +50,6 @@ namespace user_equipment {
         bool isShutdownSent = false;
         ControlClient controlBand_;
         std::unique_ptr<user_equipment::DataHandler> dataHandler;
-        bool dataAvailability;
 
         void handleUserData();
     };

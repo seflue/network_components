@@ -45,14 +45,7 @@ bool user_equipment::UserEquipment::handleShutdown() {
 }
 
 void user_equipment::UserEquipment::handleUserData() {
-    auto oldAvailability = dataAvailability;
-    dataAvailability = dataHandler->isDataAvailable();
-    //dataHandler->sendTo();
-    auto output = dataAvailability
-      ? "Handle Data"
-      : "Stop handling data";
-    // if(oldAvailability != dataAvailability)
-    //     std::cout << output << std::endl;
+    dataHandler->handleData();
 }
 
 auto user_equipment::Timer::now() -> tp {
