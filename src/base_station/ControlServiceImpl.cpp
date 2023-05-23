@@ -23,15 +23,15 @@ Status ControlServiceImpl::Connect(ServerContext *context, const ConnectionReque
         reply->set_success(false);
         reply->set_error(control::CONNECTION_NO_SOCKET_FREE);
         LOG_DEBUG("No connections left.");
+        return Status::CANCELLED;
     }
     else {
         reply->set_success(true);
         reply->set_error(control::CONNECTION_SUCCESS);
         reply->set_dataport(*udpPort);
         LOG_DEBUG("Successfully connected {} to port {}.", request->ueid(), *udpPort);
+        return Status::OK;
     }
-
-    return Status::OK;
 }
 
 ControlServiceImpl::ControlServiceImpl(const std::shared_ptr<State> &state,

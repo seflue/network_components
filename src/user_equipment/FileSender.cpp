@@ -23,7 +23,7 @@ auto user_equipment::FileSender::sendNext() -> bool
     fis_->read(buffer_->data(), bufferSize);
     try {
         socket_->sendBytes(buffer_->data(), fis_->gcount());
-        LOG_DEBUG("Set {} bytes", fis_->gcount());
+        LOG_DEBUG("Send {} bytes", fis_->gcount());
     }
     catch (const Poco::Exception ex) {
         LOG_ERROR("Error sending file: {}", ex.displayText());

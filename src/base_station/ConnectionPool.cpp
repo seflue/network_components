@@ -31,6 +31,8 @@ auto ConnectionPool::reserveConnection(const std::string &ueid, const std::strin
 
     auto &available = *iter;
     available->connect(ueid, filename);
+    if(!reservedClients_.contains(ueid))
+        reservedClients_[ueid] = 0;
     reservedClients_[ueid]++;
 
     return available->udpPort();
@@ -51,6 +53,8 @@ auto ConnectionPool::releaseConnection(const std::string &ueid, const uint32_t u
     LOG_DEBUG("About to disconnect {} ...", (*toRelease)->toString());
     (*toRelease)->disconnect();
     reservedClients_[ueid]--;
+    if(reservedClients_[ueid] == 0)
+        reservedClients_.erase(ueid);
     LOG_DEBUG("Disconnected {}.", (*toRelease)->toString());
     return true;
 }
