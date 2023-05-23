@@ -1,7 +1,3 @@
-//
-// Created by seflue on 17.05.2023.
-//
-
 #ifndef NETWORK_COMPONENTS_COINORDICE_H
 #define NETWORK_COMPONENTS_COINORDICE_H
 
@@ -11,9 +7,9 @@
 
 namespace utils {
 
-template <int N> class CoinOrDice {
+template <uint32_t N> class CoinOrDice {
   public:
-    CoinOrDice() : distribution(1, N) {}
+    CoinOrDice() : distribution(1u, N) {}
 
     void setDistribution(const std::vector<double> &probabilities)
     {
@@ -32,14 +28,15 @@ template <int N> class CoinOrDice {
             }
         }
 
-        distribution = std::discrete_distribution<>(probabilities.begin(), probabilities.end());
+        distribution =
+            std::discrete_distribution<uint32_t>(probabilities.begin(), probabilities.end());
     }
 
-    int getValue() { return distribution(generator); }
+    uint32_t getValue() { return distribution(generator); }
 
   private:
     std::default_random_engine generator;
-    std::discrete_distribution<> distribution;
+    std::discrete_distribution<uint32_t> distribution;
 };
 } // namespace utils
 

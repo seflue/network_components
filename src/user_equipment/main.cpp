@@ -24,7 +24,7 @@ std::function<void(int)> shutdown_handler;
  */
 void signal_handler(int signum) { shutdown_handler(signum); }
 
-int main(int argc, char **argv)
+int main()
 {
     initializeLogger();
     LOG_INFO("Starting user equipment workers:");

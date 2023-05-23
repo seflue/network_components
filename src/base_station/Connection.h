@@ -1,16 +1,11 @@
-//
-// Created by seflue on 20.05.2023.
-//
-
 #ifndef NETWORK_COMPONENTS_CONNECTION_H
 #define NETWORK_COMPONENTS_CONNECTION_H
 
+#include <Poco/NObserver.h>
 #include <Poco/Net/DatagramSocket.h>
+#include <Poco/Net/SocketAcceptor.h>
 #include <Poco/Net/SocketNotification.h>
 #include <Poco/Net/SocketReactor.h>
-#include <Poco/Net/SocketNotification.h>
-#include <Poco/Net/SocketAcceptor.h>
-#include <Poco/NObserver.h>
 #include <fstream>
 #include <optional>
 #include <string>
@@ -22,7 +17,6 @@ using Notification = Poco::AutoPtr<Poco::Net::ReadableNotification>;
 
 class Connection {
   public:
-    // explicit Connection(uint32_t udpPort);
     explicit Connection() : _file(), _reactor(nullptr), _socket(nullptr) {}
     void connect(std::string ueid, std::string filename);
     void disconnect();
@@ -32,7 +26,6 @@ class Connection {
     std::string toString() const { return std::format("{}:{}:{}", _ueid, _addr, _udpPort); }
 
   private:
-    void receiveData();
     void start();
     auto openFile() -> bool;
     void closeFile();
@@ -51,8 +44,6 @@ class Connection {
     std::unique_ptr<Poco::NObserver<Connection, Poco::Net::ReadableNotification>> _observer;
     std::thread _reactorThread;
     std::atomic<bool> _connected;
-    std::atomic<bool> waitingForTimeout_;
-    std::atomic<bool> _allowDisconnect;
     std::string _addr;
 
     void openSocket();

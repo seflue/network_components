@@ -1,7 +1,3 @@
-//
-// Created by seflue on 11.05.2023.
-//
-
 #ifndef NETWORK_COMPONENTS_USEREQUIPMENT_H
 #define NETWORK_COMPONENTS_USEREQUIPMENT_H
 

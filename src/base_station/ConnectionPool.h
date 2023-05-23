@@ -1,7 +1,3 @@
-//
-// Created by seflue on 20.05.2023.
-//
-
 #ifndef NETWORK_COMPONENTS_CONNECTIONPOOL_H
 #define NETWORK_COMPONENTS_CONNECTIONPOOL_H
 
@@ -26,9 +22,9 @@ class ConnectionPool {
 
   private:
     std::vector<std::shared_ptr<Connection>> connections_;
-    std::map<std::string, int> reservedClients_;
-    int maxConnections_;
-    int maxClients_;
+    std::map<std::string, size_t> reservedClients_;
+    size_t maxConnections_;
+    size_t maxClients_;
 };
 } // namespace base_station
 

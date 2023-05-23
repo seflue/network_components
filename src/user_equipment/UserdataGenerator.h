@@ -1,7 +1,3 @@
-//
-// Created by seflue on 20.05.2023.
-//
-
 #ifndef NETWORK_COMPONENTS_USERDATAGENERATOR_H
 #define NETWORK_COMPONENTS_USERDATAGENERATOR_H
 
@@ -16,7 +12,7 @@ class UserdataGenerator {
     explicit UserdataGenerator() { selector.setDistribution({1, 1, 1, 1, 100}); }
     std::optional<std::string> generate()
     {
-        int selection = selector.getValue();
+        auto selection = selector.getValue();
         if (selection < files_.size()) {
             auto file = files_[selection];
             if (file.empty())

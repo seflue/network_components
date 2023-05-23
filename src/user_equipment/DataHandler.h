@@ -1,7 +1,3 @@
-//
-// Created by seflue on 12.05.2023.
-//
-
 #ifndef NETWORK_COMPONENTS_DATAHANDLER_H
 #define NETWORK_COMPONENTS_DATAHANDLER_H
 

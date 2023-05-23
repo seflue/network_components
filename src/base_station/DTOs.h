@@ -1,7 +1,3 @@
-//
-// Created by seflue on 22.05.2023.
-//
-
 #ifndef NETWORK_COMPONENTS_DTOS_H
 #define NETWORK_COMPONENTS_DTOS_H
 

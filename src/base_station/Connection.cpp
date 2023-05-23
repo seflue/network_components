@@ -1,7 +1,6 @@
 #include "Logging.h"
 #include <Poco/NObserver.h>
 #include <Poco/Net/DatagramSocket.h>
-#include <Poco/Net/SocketAcceptor.h>
 #include <Poco/Net/SocketAddress.h>
 #include <Poco/Net/SocketNotification.h>
 #include <Poco/Net/SocketReactor.h>
@@ -15,13 +14,6 @@
 using namespace base_station;
 namespace fs = std::filesystem;
 using SocketObserver = Poco::NObserver<Connection, Poco::Net::ReadableNotification>;
-
-// Connection::Connection(uint32_t udpPort)
-//     : _filename(),
-//       _file(),
-//       _reactor(nullptr),
-//       _socket(nullptr)
-//{ }
 
 void Connection::connect(std::string ueid, std::string filename)
 {
@@ -96,6 +88,7 @@ auto Connection::openFile() -> bool
 
 void Connection::onSocketReadable(const Notification &n)
 {
+    LOG_DEBUG("Notification {} from Socket {}", n->socket().address().toString(), n->name());
     Poco::Net::SocketAddress sender;
     std::vector<char> buffer(1024);
 
@@ -118,7 +111,6 @@ void Connection::onSocketReadable(const Notification &n)
             else
                 LOG_ERROR("Error wile writing to file");
         }
-        _allowDisconnect = true;
     }
     catch (const Poco::Exception &ex) {
         LOG_ERROR("Error receiving data: {}", ex.displayText());
@@ -139,25 +131,6 @@ void Connection::runReactor()
 
 void Connection::stop()
 {
-    const std::chrono::milliseconds timeout(10000);
-    auto startTime = std::chrono::steady_clock::now();
-    while (true) {
-        if (_allowDisconnect)
-            break;
-        LOG_DEBUG("Stop received before reactor started, waiting ...");
-        LOG_DEBUG("Socket status {} : {}",
-                  _socket->address().toString(),
-                  _reactor->has(*_socket) ? "true" : "false");
-        LOG_DEBUG("Callback status {}: {}",
-                  _socket->address().toString(),
-                  _reactor->hasEventHandler(*_socket, *_observer) ? "true" : "false");
-        sleep(1);
-        auto current = std::chrono::steady_clock::now();
-        if (startTime + timeout < current) {
-            LOG_DEBUG("Timed out.");
-            break;
-        }
-    }
     if (_reactor) {
         LOG_DEBUG("{}: Stop reactor", toString());
         _reactor->stop();

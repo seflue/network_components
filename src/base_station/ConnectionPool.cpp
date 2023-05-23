@@ -31,7 +31,7 @@ auto ConnectionPool::reserveConnection(const std::string &ueid, const std::strin
 
     auto &available = *iter;
     available->connect(ueid, filename);
-    if(!reservedClients_.contains(ueid))
+    if (!reservedClients_.contains(ueid))
         reservedClients_[ueid] = 0;
     reservedClients_[ueid]++;
 
@@ -53,7 +53,7 @@ auto ConnectionPool::releaseConnection(const std::string &ueid, const uint32_t u
     LOG_DEBUG("About to disconnect {} ...", (*toRelease)->toString());
     (*toRelease)->disconnect();
     reservedClients_[ueid]--;
-    if(reservedClients_[ueid] == 0)
+    if (reservedClients_[ueid] == 0)
         reservedClients_.erase(ueid);
     LOG_DEBUG("Disconnected {}.", (*toRelease)->toString());
     return true;
@@ -61,13 +61,11 @@ auto ConnectionPool::releaseConnection(const std::string &ueid, const uint32_t u
 
 ConnectionPool::ConnectionPool(uint16_t maxConnections, uint16_t maxClients
                                //    std::pair<uint32_t , uint32_t> portRange
-                               )
-    : maxConnections_(maxConnections), maxClients_(maxClients)
+                               ) :
+    maxConnections_(maxConnections), maxClients_(maxClients)
 {
-    // auto [start, end] = portRange;
-    auto start = 0;
-    auto end = maxConnections * maxClients;
-    for (auto &&_ : std::views::iota(start, end)) {
+    auto totalConnections = maxConnections * maxClients;
+    for (auto i = 0; i < totalConnections; ++i) {
         connections_.push_back(std::make_shared<Connection>());
         LOG_DEBUG("Connection created");
     }

@@ -8,34 +8,34 @@ list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
 set(CMAKE_CXX_STANDARD 20)
 set(USER_CONAN_CMAKE false)
 
-if(${USE_CONAN_CMAKE})
-  include(CMake/Conan.cmake)
-  run_conan()
-endif()
+if (${USE_CONAN_CMAKE})
+    include(CMake/Conan.cmake)
+    run_conan()
+endif ()
 
 # GRPC Setup
 find_package(Protobuf REQUIRED)
 
-if(Protobuf_FOUND)
+if (Protobuf_FOUND)
     message(STATUS "..... protobuf found ......")
     include_directories(${Protobuf_INCLUDE_DIRS})
-endif()
+endif ()
 find_package(gRPC REQUIRED)
-if(gRPC_FOUND)
+if (gRPC_FOUND)
     message(STATUS "..... grpc found ......")
     include_directories(${gRPC_INCLUDE_DIRS})
-endif()
+endif ()
 find_package(absl REQUIRED)
-if(absl_FOUND)
+if (absl_FOUND)
     message(STATUS "..... absl found ......")
     include_directories(${absl_INCLUDE_DIRS})
-endif()
+endif ()
 add_compile_definitions(SPDLOG_USE_STD_FORMAT)
 find_package(spdlog REQUIRED)
-if(spdlog_FOUND)
+if (spdlog_FOUND)
     message(STATUS "..... spdlog found ......")
     include_directories(${absl_INCLUDE_DIRS})
-endif()
+endif ()
 
 set(_PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
 set(_GRPC_REFLECTION gRPC::grpc++_reflection)
@@ -71,20 +71,20 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/build")
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_LIST_DIR}/build")
 
 find_package(Poco REQUIRED COMPONENTS Foundation Util Net)
-if(Poco_FOUND)
+if (Poco_FOUND)
     include_directories(${Poco_INCLUDE_DIRS})
-endif()
+endif ()
 
 set(poco-libs Poco::Foundation Poco::Util Poco::Net)
 
 set(grpc-libs
-  proto-objects
-  absl::flags
-  absl::flags_parse
-  ${_GRPC_GRPCPP}
-  ${_GRPC_REFLECTION}
-  ${_PROTOBUF_LIBPROTOBUF}
-)
+        proto-objects
+        absl::flags
+        absl::flags_parse
+        ${_GRPC_GRPCPP}
+        ${_GRPC_REFLECTION}
+        ${_PROTOBUF_LIBPROTOBUF}
+        )
 
 set(UE_SOURCE_DIR src/user_equipment)
 set(BS_SOURCE_DIR src/base_station)
@@ -116,18 +116,25 @@ set_target_properties(utils PROPERTIES LINKER_LANGUAGE CXX)
 
 file(GENERATE OUTPUT debug_genexpr CONTENT "$<JOIN:${Poco_INCLUDE_DIRS}, >")
 
-#include_directories(${Poco_INCLUDES})
 target_include_directories(user_equipment PRIVATE ${Poco_INCLUDE_DIRS} ${UTILS_SOURCE_DIR} ${spdlog_INCLUDE_DIRS})
 target_include_directories(base_station PRIVATE ${Poco_INCLUDE_DIRS} ${UTILS_SOURCE_DIR} ${spdlog_INCLUDE_DIRS})
 target_include_directories(utils PRIVATE ${spdlog_INCLUDE_DIRS})
 
-foreach(_target
-  user_equipment
-  base_station)
-target_link_libraries(${_target} ${utils} ${poco-libs} ${grpc-libs})
-endforeach()
+foreach (_target
+        user_equipment
+        base_station)
+    target_link_libraries(${_target} ${utils} ${poco-libs} ${grpc-libs})
+endforeach ()
 
-#target_link_libraries(user_equipment
-#  Poco::Foundation Poco::Util Poco::Net
-#  $<JOIN:${grpc-libs}, >
-#)
+# Turn on some compiler warnings
+foreach (_target
+        user_equipment
+        base_station
+        utils
+        )
+    target_compile_options(${_target} PRIVATE
+            $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
+            -Wall -Werror -Wextra>
+            $<$<CXX_COMPILER_ID:MSVC>:
+            /W4>)
+endforeach ()

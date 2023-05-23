@@ -1,7 +1,3 @@
-//
-// Created by seflue on 12.05.2023.
-//
-
 #include "DataHandler.h"
 #include "Logging.h"
 #include "Poco/Net/NetException.h"
@@ -40,11 +36,11 @@ void DataHandler::handleData(ControlClient &controlClient)
                       userConnection->udpPort);
             sender_ = std::make_unique<FileSender>(file, *userConnection);
         }
-        catch (Poco::FileNotFoundException e) {
+        catch (Poco::FileNotFoundException &e) {
             LOG_ERROR("Poco Exception: File {} not found!", file);
             return;
         }
-        catch (Poco::Net::HostNotFoundException e) {
+        catch (Poco::Net::HostNotFoundException &e) {
             LOG_ERROR("File: {}, ", file);
             LOG_ERROR("Host not found for address {}:{}",
                       userConnection->grpcSocket.ip,

@@ -4,7 +4,7 @@
 
 using namespace base_station;
 
-Status ControlServiceImpl::Scan(ServerContext *context, const ScanRequest *request,
+Status ControlServiceImpl::Scan([[maybe_unused]] ServerContext *context, const ScanRequest *request,
                                 ScanReply *reply)
 {
     LOG_DEBUG("Received 'Scan' from {}", request->ueid());
@@ -12,8 +12,8 @@ Status ControlServiceImpl::Scan(ServerContext *context, const ScanRequest *reque
     return Status::OK;
 }
 
-Status ControlServiceImpl::Connect(ServerContext *context, const ConnectionRequest *request,
-                                   ConnectionReply *reply)
+Status ControlServiceImpl::Connect([[maybe_unused]] ServerContext *context,
+                                   const ConnectionRequest *request, ConnectionReply *reply)
 {
     std::string ueid = request->ueid();
     LOG_DEBUG("Received 'Connect' from {}:{}", request->ueid(), request->filename());
@@ -35,17 +35,18 @@ Status ControlServiceImpl::Connect(ServerContext *context, const ConnectionReque
 }
 
 ControlServiceImpl::ControlServiceImpl(const std::shared_ptr<State> &state,
-                                       std::unique_ptr<ConnectionPool> pool)
-    : state_(state), connectionPool_(std::move(pool))
+                                       std::unique_ptr<ConnectionPool> pool) :
+    state_(state), connectionPool_(std::move(pool))
 {
 }
 
-Status ControlServiceImpl::Disconnect(ServerContext *context, const DisconnectionRequest *request,
+Status ControlServiceImpl::Disconnect([[maybe_unused]] ServerContext *context,
+                                      const DisconnectionRequest *request,
                                       DisconnectionReply *reply)
 {
     LOG_DEBUG("Received 'Disconnect' from {}:{}", request->ueid(), request->dataport());
     auto success = connectionPool_->releaseConnection(request->ueid(), request->dataport());
-    if(!success)
+    if (!success)
         LOG_WARN("Could not release connection for {}:{}", request->ueid(), request->dataport());
     reply->set_success(success);
     reply->set_error(success ? control::DISCONNECTION_SUCCESS

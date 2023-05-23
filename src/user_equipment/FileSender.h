@@ -6,7 +6,6 @@
 
 namespace user_equipment {
 class FileSender;
-class Socket;
 
 class FileSender {
   public:
@@ -14,15 +13,15 @@ class FileSender {
                         const user_equipment::UserConnection &userConnection);
 
     auto sendNext() -> bool;
-    auto userConnection() -> UserConnection { return userConnection_; }
+    auto userConnection() -> UserConnection { return _userConnection; }
 
   private:
-    std::string file_;
-    std::unique_ptr<Poco::Net::DatagramSocket> socket_;
-    std::unique_ptr<Poco::FileInputStream> fis_;
-    std::unique_ptr<Poco::Net::SocketAddress> socketAddress_;
-    UserConnection userConnection_;
-    const size_t bufferSize = 1024;
-    std::unique_ptr<std::vector<char>> buffer_ = std::make_unique<std::vector<char>>(bufferSize);
+    UserConnection _userConnection;
+    std::string _file;
+    std::unique_ptr<Poco::FileInputStream> _fis;
+    std::unique_ptr<Poco::Net::SocketAddress> _socketAddress;
+    std::unique_ptr<Poco::Net::DatagramSocket> _socket;
+    const size_t _bufferSize = 1024;
+    std::unique_ptr<std::vector<char>> _buffer = std::make_unique<std::vector<char>>(_bufferSize);
 };
 } // namespace user_equipment

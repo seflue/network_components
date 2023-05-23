@@ -4,28 +4,30 @@
 #include "Logging.h"
 
 user_equipment::FileSender::FileSender(const std::string &file,
-                                       const UserConnection &userConnection)
-    : socket_(std::make_unique<Poco::Net::DatagramSocket>()), file_(file),
-      userConnection_(userConnection), socketAddress_(std::make_unique<Poco::Net::SocketAddress>(
-                                           userConnection.grpcSocket.ip, userConnection.udpPort)),
-      fis_(std::make_unique<Poco::FileInputStream>(file))
+                                       const UserConnection &userConnection) :
+    _userConnection(userConnection),
+    _file(file),
+    _fis(std::make_unique<Poco::FileInputStream>(file)),
+    _socketAddress(std::make_unique<Poco::Net::SocketAddress>(userConnection.grpcSocket.ip,
+                                                              userConnection.udpPort)),
+    _socket(std::make_unique<Poco::Net::DatagramSocket>())
 {
-    socket_->connect(*socketAddress_);
+    _socket->connect(*_socketAddress);
 }
 
 auto user_equipment::FileSender::sendNext() -> bool
 {
-    if (fis_->eof()) {
-        LOG_DEBUG("Reached end of file {}", file_);
+    if (_fis->eof()) {
+        LOG_DEBUG("Reached end of file {}", _file);
         return false;
     }
 
-    fis_->read(buffer_->data(), bufferSize);
+    _fis->read(_buffer->data(), _bufferSize);
     try {
-        socket_->sendBytes(buffer_->data(), fis_->gcount());
-        LOG_DEBUG("Send {} bytes", fis_->gcount());
+        _socket->sendBytes(_buffer->data(), _fis->gcount());
+        LOG_DEBUG("Send {} bytes", _fis->gcount());
     }
-    catch (const Poco::Exception ex) {
+    catch (const Poco::Exception &ex) {
         LOG_ERROR("Error sending file: {}", ex.displayText());
     }
     return true;

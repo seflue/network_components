@@ -44,12 +44,9 @@ void RunServer(uint16_t grpcPort)
 {
     const std::shared_ptr<State> state = std::make_shared<State>(grpcPort);
     std::string server_address = absl::StrFormat("0.0.0.0:%d", grpcPort);
-    uint32_t maxConnections = 1;
-    uint32_t maxClients = 1;
-    uint32_t numberOfPorts = maxClients * maxConnections;
-    uint32_t udpPort = grpcPort + 1000;
+    uint32_t maxConnections = 2;
+    uint32_t maxClients = 2;
     auto connectionPool = std::make_unique<ConnectionPool>(maxConnections, maxClients);
-    // std::pair{udpPort, udpPort + numberOfPorts});
     ControlServiceImpl service(state, std::move(connectionPool));
 
     grpc::EnableDefaultHealthCheckService(true);

@@ -7,3 +7,10 @@ UseTab: Never
 BreakBeforeBraces: Stroustrup
 AllowAllArgumentsOnNextLine: false
 BinPackArguments: false
+SpaceBeforeCtorInitializerColon: true
+ConstructorInitializerIndentWidth: 4
+BreakBeforeInheritanceComma: false
+BreakInheritanceList: AfterColon
+BreakConstructorInitializersBeforeComma: false
+BreakConstructorInitializers: AfterColon
+ConstructorInitializerAllOnOneLineOrOnePerLine: true

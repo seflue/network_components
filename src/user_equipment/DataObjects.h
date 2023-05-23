@@ -1,7 +1,3 @@
-//
-// Created by seflue on 17.05.2023.
-//
-
 #ifndef NETWORK_COMPONENTS_DATAOBJECTS_H
 #define NETWORK_COMPONENTS_DATAOBJECTS_H
 
