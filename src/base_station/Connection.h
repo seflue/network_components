@@ -8,12 +8,16 @@
 #include <Poco/Net/DatagramSocket.h>
 #include <Poco/Net/SocketNotification.h>
 #include <Poco/Net/SocketReactor.h>
+#include <Poco/Net/SocketNotification.h>
+#include <Poco/Net/SocketAcceptor.h>
+#include <Poco/NObserver.h>
 #include <fstream>
 #include <optional>
 #include <string>
 #include <thread>
 
 namespace base_station {
+class Connection;
 using Notification = Poco::AutoPtr<Poco::Net::ReadableNotification>;
 
 class Connection {
@@ -37,12 +41,14 @@ class Connection {
     void stop();
 
     std::string _filename;
+    std::string _fullFilePath;
     std::ofstream _file;
     std::string _ueid;
     uint32_t _udpPort;
     std::thread _receiver;
     std::unique_ptr<Poco::Net::SocketReactor> _reactor;
     std::unique_ptr<Poco::Net::DatagramSocket> _socket;
+    std::unique_ptr<Poco::NObserver<Connection, Poco::Net::ReadableNotification>> _observer;
     std::thread _reactorThread;
     std::atomic<bool> _connected;
     std::atomic<bool> waitingForTimeout_;

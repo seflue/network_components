@@ -14,6 +14,7 @@
 
 using namespace base_station;
 namespace fs = std::filesystem;
+using SocketObserver = Poco::NObserver<Connection, Poco::Net::ReadableNotification>;
 
 // Connection::Connection(uint32_t udpPort)
 //     : _filename(),
@@ -29,15 +30,13 @@ void Connection::connect(std::string ueid, std::string filename)
     _ueid = ueid;
     _filename = filename;
     start();
-    //_connected = true;
-    //_receiver = std::thread(&Connection::receiveData, this);
 }
 
 void Connection::start()
 {
     try {
-        openFile();
         openSocket();
+        openFile();
         startReactor();
         _connected = true;
     }
@@ -46,15 +45,20 @@ void Connection::start()
     }
 }
 
+void Connection::disconnect()
+{
+    if (!_connected)
+        return;
+    stop();
+}
+
 void Connection::startReactor()
 {
     _reactor = std::make_unique<Poco::Net::SocketReactor>();
-    _reactor->addEventHandler(*_socket,
-                              Poco::NObserver<Connection, Poco::Net::ReadableNotification>(
-                                  *this,
-                                  &Connection::onSocketReadable));
+    _observer = std::make_unique<SocketObserver>(*this, &Connection::onSocketReadable);
+    _reactor->addEventHandler(*_socket, *_observer);
     _reactorThread = std::thread(&Connection::runReactor, this);
-    LOG_DEBUG("Reactor started");
+    LOG_DEBUG("{} Reactor started", toString());
 }
 
 void Connection::openSocket()
@@ -63,72 +67,11 @@ void Connection::openSocket()
     Poco::Net::SocketAddress recipient(Poco::Net::IPAddress(), 0);
     _socket->bind(recipient);
     LOG_DEBUG("Socket bound to {} ", _socket->address().toString());
-}
-
-void Connection::disconnect()
-{
-    if (!_connected)
-        return;
-    stop();
-    // if(!_receiver.joinable())
-    //     return;
-    //_receiver.join();
+    _udpPort = _socket->address().port();
+    LOG_DEBUG("Port set to {} ", _udpPort);
 }
 
 bool Connection::isAvailable() const { return !_connected && !_receiver.joinable(); }
-
-void Connection::receiveData()
-{
-    auto sa = Poco::Net::SocketAddress(Poco::Net::IPAddress(), _udpPort);
-    auto dgs = Poco::Net::DatagramSocket(sa, true);
-
-    std::vector<char> buffer(1024);
-
-    const std::chrono::milliseconds timeout(5000);
-    auto startTime = std::chrono::steady_clock::now();
-
-    try {
-        while (true) {
-            Poco::Net::SocketAddress sender;
-            std::size_t bytesRead;
-            try {
-                bytesRead = dgs.receiveFrom(buffer.data(), buffer.size() - 1, sender);
-            }
-            catch (const Poco::Exception &ex) {
-                LOG_ERROR("Error receiving data: {}", ex.displayText());
-                break;
-            }
-            if (!_connected) {
-                if (waitingForTimeout_) {
-                    auto currentTime = std::chrono::steady_clock::now();
-                    if (currentTime - startTime >= timeout) {
-                        LOG_DEBUG("Timeout exceeded, stop reception.");
-                        break; // Timeout exceeded, stop receiving
-                    }
-                }
-
-                LOG_DEBUG("Received disconnect, waiting for timeout.");
-                startTime = std::chrono::steady_clock::now();
-                waitingForTimeout_ = true;
-            }
-            if (bytesRead == 0) {
-                LOG_DEBUG("No more data to receive");
-                break; // No more data to receive
-            }
-
-            LOG_DEBUG("{} bytes received from {}", bytesRead, sender.toString());
-            _file.write(buffer.data(), bytesRead);
-            LOG_DEBUG("{} written to file {}", buffer.data(), _filename);
-        }
-
-        LOG_DEBUG("File received successfully.");
-    }
-    catch (const Poco::Exception &ex) {
-        LOG_ERROR("Error receiving data: {}", ex.displayText());
-    }
-
-    _file.close();
-}
 
 auto Connection::openFile() -> bool
 {
@@ -141,13 +84,13 @@ auto Connection::openFile() -> bool
         return false;
     }
 
-    std::string fullFilePath = fullDirPath + "/" + filePath.filename().string();
-    std::ofstream _file(fullFilePath, std::ios::binary);
-    if (!_file) {
-        LOG_ERROR("Failed to open file {}", fullFilePath);
+    _fullFilePath = fullDirPath + "/" + filePath.filename().string();
+    _file = std::ofstream(_fullFilePath, std::ios::binary);
+    if (!_file.is_open()) {
+        LOG_ERROR("Failed to open file {}", _fullFilePath);
         return false;
     }
-    LOG_DEBUG("File {} successfully opened.", fullFilePath);
+    LOG_DEBUG("File {} successfully opened.", _fullFilePath);
     return true;
 }
 
@@ -159,10 +102,21 @@ void Connection::onSocketReadable(const Notification &n)
     try {
         LOG_DEBUG("About to read from buffer ...");
         std::size_t bytesRead = _socket->receiveFrom(buffer.data(), buffer.size(), sender);
+        LOG_DEBUG("Received {} bytes from {}", bytesRead, sender.toString());
+        LOG_DEBUG("Buffer data: {}", std::string(buffer.begin(), buffer.begin() + bytesRead));
 
         if (bytesRead > 0) {
-            _file.write(buffer.data(), bytesRead);
-            LOG_DEBUG("Received {} bytes from {}", bytesRead, sender.toString());
+            if (!_file.is_open())
+                LOG_ERROR("File not open, opening at {}", _fullFilePath);
+            else if (_file.write(buffer.data(), bytesRead)) {
+                LOG_DEBUG("{} bytes written successfully", bytesRead);
+                if (_file.fail())
+                    LOG_DEBUG("File status: fail");
+                if (_file.bad())
+                    LOG_DEBUG("File status: bad");
+            }
+            else
+                LOG_ERROR("Error wile writing to file");
         }
         _allowDisconnect = true;
     }
@@ -174,8 +128,9 @@ void Connection::onSocketReadable(const Notification &n)
 void Connection::runReactor()
 {
     try {
+        LOG_DEBUG("{}: About to run reactor", toString());
         _reactor->run();
-        LOG_DEBUG("{}: Reactor started.", toString());
+        LOG_DEBUG("{}: Reactor stopped.", toString());
     }
     catch (const Poco::Exception &ex) {
         LOG_ERROR("Error running reactor: {}", ex.displayText());
@@ -184,15 +139,21 @@ void Connection::runReactor()
 
 void Connection::stop()
 {
-    const std::chrono::milliseconds timeout(5000);
+    const std::chrono::milliseconds timeout(10000);
     auto startTime = std::chrono::steady_clock::now();
-    while(true)
-    {
-        if(_allowDisconnect)
+    while (true) {
+        if (_allowDisconnect)
             break;
-        sleep(0.1);
+        LOG_DEBUG("Stop received before reactor started, waiting ...");
+        LOG_DEBUG("Socket status {} : {}",
+                  _socket->address().toString(),
+                  _reactor->has(*_socket) ? "true" : "false");
+        LOG_DEBUG("Callback status {}: {}",
+                  _socket->address().toString(),
+                  _reactor->hasEventHandler(*_socket, *_observer) ? "true" : "false");
+        sleep(1);
         auto current = std::chrono::steady_clock::now();
-        if(startTime + timeout < current) {
+        if (startTime + timeout < current) {
             LOG_DEBUG("Timed out.");
             break;
         }
@@ -207,6 +168,7 @@ void Connection::stop()
     }
 
     LOG_DEBUG("Close file.");
+    _file.flush();
     _file.close();
     _connected = false;
 }
