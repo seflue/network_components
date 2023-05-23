@@ -1,0 +1,9 @@
+---
+Language: Cpp
+BasedOnStyle: LLVM
+ColumnLimit: 100
+IndentWidth: 4
+UseTab: Never
+BreakBeforeBraces: Stroustrup
+AllowAllArgumentsOnNextLine: false
+BinPackArguments: false

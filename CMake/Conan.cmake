@@ -11,7 +11,7 @@ endif()
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 
 conan_cmake_configure(
-  REQUIRES poco/1.12.4 grpc/1.50.1 abseil/20220623.0 openssl/3.1.0
+  REQUIRES poco/1.12.4 grpc/1.50.1 abseil/20220623.0 openssl/3.1.0 spdlog/1.11.0
   GENERATORS cmake_find_package cmake_paths
 )
 conan_cmake_autodetect(settings)

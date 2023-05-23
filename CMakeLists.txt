@@ -27,7 +27,13 @@ if(gRPC_FOUND)
 endif()
 find_package(absl REQUIRED)
 if(absl_FOUND)
-    message(STATUS "..... grpc found ......")
+    message(STATUS "..... absl found ......")
+    include_directories(${absl_INCLUDE_DIRS})
+endif()
+add_compile_definitions(SPDLOG_USE_STD_FORMAT)
+find_package(spdlog REQUIRED)
+if(spdlog_FOUND)
+    message(STATUS "..... spdlog found ......")
     include_directories(${absl_INCLUDE_DIRS})
 endif()
 
@@ -80,29 +86,45 @@ set(grpc-libs
   ${_PROTOBUF_LIBPROTOBUF}
 )
 
-set(UE_SOURCE_DIR user_equipment)
-file(GLOB UE_FILES ${SOURCE_DIR}/*.h ${SOURCE_DIR}/*.cpp)
+set(UE_SOURCE_DIR src/user_equipment)
+set(BS_SOURCE_DIR src/base_station)
+set(HSS_SOURCE_DIR src/home_subscriber_server)
+set(UTILS_SOURCE_DIR src/utils)
 
-add_executable(user_equipment user_equipment/main.cpp
-  user_equipment/UserEquipment.h user_equipment/UserEquipment.cpp
-  user_equipment/ControlClient.h user_equipment/ControlClient.cpp
-        user_equipment/DataHandler.h user_equipment/DataHandler.cpp
-  user_equipment/DataSender.h user_equipment/DataSender.cpp
-        utils/CoinOrDice.h user_equipment/DataObjects.h)
-add_executable(base_station base_station/main.cpp utils/CoinOrDice.h)
-add_executable(home_subscriber_server home_subscriber_server/main.cpp)
+set(TESTDATA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/testdata)
+set(UE_WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR}/user_equipment_wd)
+set(BS_WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR}/base_station_wd)
+
+file(MAKE_DIRECTORY ${UE_WORKING_DIR})
+file(MAKE_DIRECTORY ${BS_WORKING_DIR})
+
+file(GLOB UE_SOURCE_FILES ${UE_SOURCE_DIR}/*.h ${UE_SOURCE_DIR}/*.cpp)
+file(GLOB BS_SOURCE_FILES ${BS_SOURCE_DIR}/*.h ${BS_SOURCE_DIR}/*.cpp)
+file(GLOB HSS_SOURCE_FILES ${HSS_SOURCE_DIR}/*.h ${HSS_SOURCE_DIR}/*.cpp)
+file(GLOB UTILS_SOURCE_FILES ${UTILS_SOURCE_DIR}/*.h ${UTILS_SOURCE_DIR}/*.cpp)
+
+file(COPY ${TESTDATA_DIR} DESTINATION ${UE_WORKING_DIR})
+
+add_executable(user_equipment ${UE_SOURCE_FILES})
+set_target_properties(user_equipment PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${UE_WORKING_DIR})
+add_executable(base_station ${BS_SOURCE_FILES})
+set_target_properties(base_station PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${BS_WORKING_DIR})
+add_executable(home_subscriber_server ${HSS_SOURCE_FILES})
+add_library(utils ${UTILS_SOURCE_DIR})
+set_target_properties(utils PROPERTIES LINKER_LANGUAGE CXX)
+
+
 file(GENERATE OUTPUT debug_genexpr CONTENT "$<JOIN:${Poco_INCLUDE_DIRS}, >")
 
 #include_directories(${Poco_INCLUDES})
-target_include_directories(user_equipment PUBLIC ${Poco_INCLUDE_DIRS})
-target_include_directories(base_station PUBLIC ${Poco_INCLUDE_DIRS})
-
-get_target_property(poco_dirs user_equipment INCLUDE_DIRS)
+target_include_directories(user_equipment PRIVATE ${Poco_INCLUDE_DIRS} ${UTILS_SOURCE_DIR} ${spdlog_INCLUDE_DIRS})
+target_include_directories(base_station PRIVATE ${Poco_INCLUDE_DIRS} ${UTILS_SOURCE_DIR} ${spdlog_INCLUDE_DIRS})
+target_include_directories(utils PRIVATE ${spdlog_INCLUDE_DIRS})
 
 foreach(_target
   user_equipment
   base_station)
-target_link_libraries(${_target} ${poco-libs} ${grpc-libs})
+target_link_libraries(${_target} ${utils} ${poco-libs} ${grpc-libs})
 endforeach()
 
 #target_link_libraries(user_equipment

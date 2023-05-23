@@ -79,9 +79,9 @@ while(true)
 }
 ```
 
-To send periodic messages, a timer gets started and is checked in every iteration of the main loop, if it has expired. The timer internally just stores a timestamp. `isExpired` just measures the delta between the stored timestamp and the current time and checks, if it is greater than a defined period. Reset sets the timestamp to the current time.
+To send periodic messages, a _timer gets started and is checked in every iteration of the main loop, if it has expired. The _timer internally just stores a timestamp. `isExpired` just measures the delta between the stored timestamp and the current time and checks, if it is greater than a defined period. Reset sets the timestamp to the current time.
 
-When the timer is exceeded, a paging message is sent. This behavior could be encapsulated behind `updateBSInfo`.
+When the _timer is exceeded, a paging message is sent. This behavior could be encapsulated behind `updateBSInfo`.
 
 To actually send user data, we need to know, if there is data, which actually needs to be sent. Depending on the connection state and the available BS information, a UDP connection can be established and data gets sent. This behavior is encapsulated behind `sendUserData`.
 

@@ -5,6 +5,21 @@ package control;
 service ControlService {
   rpc Scan (ScanRequest) returns (ScanReply) {}
   rpc Connect (ConnectionRequest) returns (ConnectionReply) {}
+  rpc Disconnect (DisconnectionRequest) returns (DisconnectionReply) {}
+}
+
+enum ScanError {
+  SCAN_SUCCESS = 0;
+}
+
+enum ConnectionError {
+  CONNECTION_SUCCESS = 0;
+  CONNECTION_NO_SOCKET_FREE = 1;
+}
+
+enum DisconnectionError {
+  DISCONNECTION_SUCCESS = 0;
+  DISCONNECTION_NO_CONNECTION_FOUND = 1;
 }
 
 message ScanRequest {
@@ -12,14 +27,29 @@ message ScanRequest {
 }
 
 message ScanReply {
-  string Quality = 1;
+  uint32 Quality = 1;
+  ScanError Error = 2;
 }
+
 
 message ConnectionRequest {
   string Ueid = 1;
+  string FileName = 2;
 }
 
 message ConnectionReply {
   bool Success = 1;
-  string Error = 2;
+  uint32 DataPort = 2;
+  ConnectionError Error = 3;
 }
+
+message DisconnectionRequest {
+  string Ueid = 1;
+  uint32 DataPort = 2;
+}
+
+message DisconnectionReply {
+  bool Success = 1;
+  DisconnectionError Error = 2;
+}
+
