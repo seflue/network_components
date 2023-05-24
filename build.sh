@@ -5,11 +5,19 @@ local_conan_dir="$(pwd)/local_conan"
 run_conan=false
 
 b() {
-  echo "$(tput bold)$1$(tput sgr0)"
+  if [[ -z "$TERM" || "$TERM" == "dumb" ]]; then
+    echo "$1"
+  else
+    echo "$(tput bold)$1$(tput sgr0)"
+  fi
 }
 
 hl() {
-  echo "$(tput setaf 2)$1$(tput sgr0)"
+  if [[ -z "$TERM" || "$TERM" == "dumb" ]]; then
+    echo "$1"
+  else
+    echo "$(tput setaf 2)$1$(tput sgr0)"
+  fi
 }
 
 usage() {

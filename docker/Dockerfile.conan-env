@@ -45,6 +45,17 @@ RUN apt-get update --fix-missing \
       python3-pip \
   && apt-get clean
 
+RUN apt-get update --fix-missing \
+  && apt-get install -y software-properties-common \
+  && add-apt-repository ppa:ubuntu-toolchain-r/test \
+  && apt-get update \
+  && apt-get install -y gcc-13 g++-13
+
+RUN update-alternatives --install $(which gcc) gcc $(which gcc-13) 100 \
+  && update-alternatives --install $(which g++) g++ $(which g++-13) 100 \
+  && gcc --version \
+  && g++ --version
+
 RUN pip install --upgrade pip && pip --version
 
 RUN mkdir -p /tmp/conan_files
