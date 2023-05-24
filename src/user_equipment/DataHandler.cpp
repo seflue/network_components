@@ -1,18 +1,16 @@
 #include "DataHandler.h"
 #include "Logging.h"
 #include "Poco/Net/NetException.h"
-#include <Poco/FileStream.h>
-#include <Poco/Net/DatagramSocket.h>
 #include <Poco/Net/SocketAddress.h>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
+#include <utility>
 
 using namespace user_equipment;
 
-DataHandler::DataHandler(const std::string &ueid) : ueid(ueid) {}
+DataHandler::DataHandler(std::string ueid) : ueid(std::move(ueid)) {}
 
-void DataHandler::handleData(ControlClient &controlClient)
+void DataHandler::handleData(ControlClient& controlClient)
 {
     std::string file;
     if (nothingToSend())
@@ -26,7 +24,7 @@ void DataHandler::handleData(ControlClient &controlClient)
 
         auto userConnection = controlClient.connect(ueid, file);
         if (!userConnection) {
-            LOG_ERROR("Cannot establish userconnection.");
+            LOG_ERROR("Cannot establish user connection.");
             return;
         }
 
@@ -36,11 +34,11 @@ void DataHandler::handleData(ControlClient &controlClient)
                       userConnection->udpPort);
             sender_ = std::make_unique<FileSender>(file, *userConnection);
         }
-        catch (Poco::FileNotFoundException &e) {
+        catch (Poco::FileNotFoundException& e) {
             LOG_ERROR("Poco Exception: File {} not found!", file);
             return;
         }
-        catch (Poco::Net::HostNotFoundException &e) {
+        catch (Poco::Net::HostNotFoundException& e) {
             LOG_ERROR("File: {}, ", file);
             LOG_ERROR("Host not found for address {}:{}",
                       userConnection->grpcSocket.ip,
@@ -56,7 +54,7 @@ void DataHandler::handleData(ControlClient &controlClient)
     }
 }
 
-void DataHandler::queueData(const std::string &file) { dataQueue_.push(file); }
+void DataHandler::queueData(const std::string& file) { dataQueue_.push(file); }
 
 bool DataHandler::nothingToSend() { return dataQueue_.empty() && !sender_; }
 

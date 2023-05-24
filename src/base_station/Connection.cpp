@@ -8,23 +8,37 @@
 #include <fstream>
 #include <iostream>
 #include <spdlog/spdlog.h>
+#include <utility>
 
 #include "Connection.h"
 
-using namespace base_station;
+namespace bs = base_station;
 namespace fs = std::filesystem;
-using SocketObserver = Poco::NObserver<Connection, Poco::Net::ReadableNotification>;
+using SocketObserver = Poco::NObserver<bs::Connection, Poco::Net::ReadableNotification>;
 
-void Connection::connect(std::string ueid, std::string filename)
+void bs::Connection::connect(std::string ueid, std::string filename)
 {
-    if (_connected)
+    if (_connected) {
+        LOG_ERROR("Connection to send {} from {} is already connected to {}",
+                  filename,
+                  ueid,
+                  _socket->address().toString());
         return;
-    _ueid = ueid;
-    _filename = filename;
+    }
+    _ueid = std::move(ueid);
+    _filename = std::move(filename);
     start();
 }
 
-void Connection::start()
+void bs::Connection::disconnect()
+{
+    if (!_connected)
+        return;
+    stop();
+    _connected = false;
+}
+
+void bs::Connection::start()
 {
     try {
         openSocket();
@@ -32,19 +46,18 @@ void Connection::start()
         startReactor();
         _connected = true;
     }
-    catch (const std::exception &ex) {
+    catch (const std::exception& ex) {
         spdlog::get("stderr")->error("Error starting receiver: {}", ex.what());
     }
 }
 
-void Connection::disconnect()
+void bs::Connection::stop()
 {
-    if (!_connected)
-        return;
-    stop();
+    stopReactor();
+    closeFile();
 }
 
-void Connection::startReactor()
+void bs::Connection::startReactor()
 {
     _reactor = std::make_unique<Poco::Net::SocketReactor>();
     _observer = std::make_unique<SocketObserver>(*this, &Connection::onSocketReadable);
@@ -53,7 +66,7 @@ void Connection::startReactor()
     LOG_DEBUG("{} Reactor started", toString());
 }
 
-void Connection::openSocket()
+void bs::Connection::openSocket()
 {
     _socket = std::make_unique<Poco::Net::DatagramSocket>();
     Poco::Net::SocketAddress recipient(Poco::Net::IPAddress(), 0);
@@ -63,9 +76,9 @@ void Connection::openSocket()
     LOG_DEBUG("Port set to {} ", _udpPort);
 }
 
-bool Connection::isAvailable() const { return !_connected && !_receiver.joinable(); }
+bool bs::Connection::isAvailable() const { return !_connected && !_receiver.joinable(); }
 
-auto Connection::openFile() -> bool
+auto bs::Connection::openFile() -> bool
 {
     auto filePath = fs::path(_filename);
     auto directoryPath = filePath.parent_path();
@@ -86,7 +99,7 @@ auto Connection::openFile() -> bool
     return true;
 }
 
-void Connection::onSocketReadable(const Notification &n)
+void bs::Connection::onSocketReadable(const Notification& n)
 {
     LOG_DEBUG("Notification {} from Socket {}", n->socket().address().toString(), n->name());
     Poco::Net::SocketAddress sender;
@@ -94,7 +107,8 @@ void Connection::onSocketReadable(const Notification &n)
 
     try {
         LOG_DEBUG("About to read from buffer ...");
-        std::size_t bytesRead = _socket->receiveFrom(buffer.data(), buffer.size(), sender);
+        auto bytesRead =
+            _socket->receiveFrom(buffer.data(), static_cast<int>(buffer.size()), sender);
         LOG_DEBUG("Received {} bytes from {}", bytesRead, sender.toString());
         LOG_DEBUG("Buffer data: {}", std::string(buffer.begin(), buffer.begin() + bytesRead));
 
@@ -112,36 +126,43 @@ void Connection::onSocketReadable(const Notification &n)
                 LOG_ERROR("Error wile writing to file");
         }
     }
-    catch (const Poco::Exception &ex) {
+    catch (const Poco::Exception& ex) {
         LOG_ERROR("Error receiving data: {}", ex.displayText());
     }
 }
 
-void Connection::runReactor()
+void bs::Connection::runReactor()
 {
     try {
         LOG_DEBUG("{}: About to run reactor", toString());
         _reactor->run();
         LOG_DEBUG("{}: Reactor stopped.", toString());
     }
-    catch (const Poco::Exception &ex) {
+    catch (const Poco::Exception& ex) {
         LOG_ERROR("Error running reactor: {}", ex.displayText());
     }
 }
 
-void Connection::stop()
+void bs::Connection::stopReactor()
 {
-    if (_reactor) {
-        LOG_DEBUG("{}: Stop reactor", toString());
-        _reactor->stop();
-        if (_reactorThread.joinable()) {
-            LOG_DEBUG("{}: Join reactor thread", toString());
-            _reactorThread.join();
-        }
+    if (!_reactor) {
+        LOG_ERROR("{}: Try to stop, but no reactor running.", toString());
+        return;
     }
 
+    LOG_DEBUG("{}: Stop reactor", toString());
+    _reactor->stop();
+
+    if (!_reactorThread.joinable())
+        return;
+
+    LOG_DEBUG("{}: Join reactor thread", toString());
+    _reactorThread.join();
+}
+
+void bs::Connection::closeFile()
+{
     LOG_DEBUG("Close file.");
     _file.flush();
     _file.close();
-    _connected = false;
 }

@@ -23,7 +23,7 @@ using namespace std::chrono_literals;
 class Timer {
     tp start_time = std::chrono::system_clock::now();
     ms duration = 10s;
-    tp now();
+    static tp now();
 
   public:
     void reset();
@@ -32,8 +32,9 @@ class Timer {
 
 class UserEquipment {
   public:
-    explicit UserEquipment(const std::string &name, const std::string &ueid,
-                           const std::vector<BaseStation> &baseStations);
+    explicit UserEquipment(const std::string& name,
+                           const std::string& ueid,
+                           const std::vector<BaseStation>& baseStations);
 
     void start();
     auto toString() -> std::string;
@@ -44,7 +45,7 @@ class UserEquipment {
     std::string _ueid;
     std::unique_ptr<user_equipment::Timer> _timer;
     void updateBsInfo();
-    bool handleShutdown();
+    [[nodiscard]] bool handleShutdown() const;
     bool _isShutdownSent = false;
     ControlClient _controlBand;
     std::unique_ptr<user_equipment::DataHandler> _dataHandler;

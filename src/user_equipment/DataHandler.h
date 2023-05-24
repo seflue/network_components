@@ -17,18 +17,13 @@ class SocketAddress;
 } // namespace Poco
 
 namespace user_equipment {
-struct DataChannel {
-    std::string fileName;
-    Socket grpcSocket;
-    uint32_t udpPort;
-};
 
 class DataHandler {
   public:
-    DataHandler(const std::string &basicString);
+    explicit DataHandler(std::string basicString);
 
-    void handleData(user_equipment::ControlClient &controlClient);
-    void queueData(const std::string &file);
+    void handleData(user_equipment::ControlClient& controlClient);
+    void queueData(const std::string& file);
 
   private:
     bool nothingToSend();

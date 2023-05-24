@@ -1,3 +1,5 @@
 cmake-build*
 local_conan
 build
+
+.idea/

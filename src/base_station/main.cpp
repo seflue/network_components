@@ -17,7 +17,6 @@
 #include <Poco/Net/SocketAddress.h>
 
 #include "ControlServiceImpl.h"
-#include "DTOs.h"
 #include "Logging.h"
 #include "controlplane.grpc.pb.h"
 
@@ -34,7 +33,6 @@ using Poco::FileOutputStream;
 using Poco::Net::DatagramSocket;
 using Poco::Net::SocketAddress;
 
-using base_station::State;
 using namespace utils::logging;
 
 ABSL_FLAG(uint16_t, port, 50051, "Server port for the service");
@@ -42,12 +40,11 @@ ABSL_FLAG(uint16_t, port, 50051, "Server port for the service");
 namespace base_station {
 void RunServer(uint16_t grpcPort)
 {
-    const std::shared_ptr<State> state = std::make_shared<State>(grpcPort);
     std::string server_address = absl::StrFormat("0.0.0.0:%d", grpcPort);
     uint32_t maxConnections = 2;
     uint32_t maxClients = 2;
     auto connectionPool = std::make_unique<ConnectionPool>(maxConnections, maxClients);
-    ControlServiceImpl service(state, std::move(connectionPool));
+    ControlServiceImpl service(std::move(connectionPool));
 
     grpc::EnableDefaultHealthCheckService(true);
     grpc::reflection::InitProtoReflectionServerBuilderPlugin();
@@ -63,7 +60,7 @@ void RunServer(uint16_t grpcPort)
 
 using base_station::RunServer;
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     absl::ParseCommandLine(argc, argv);
     initializeLogger();

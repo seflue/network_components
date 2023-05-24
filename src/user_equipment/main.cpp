@@ -1,5 +1,5 @@
+#include <csignal>
 #include <memory>
-#include <signal.h>
 #include <string>
 #include <vector>
 
@@ -37,7 +37,7 @@ int main()
     // users.push_back(std::make_unique<UserEquipment>("Bob", "0002", stations));
 
     shutdown_handler = [&](int signum) {
-        for (auto &&user : users)
+        for (auto&& user : users)
             user->shutdown();
         exit(signum);
     };
@@ -45,11 +45,11 @@ int main()
 
     std::vector<std::thread> workers;
 
-    for (auto &&user : users) {
-        workers.push_back(std::thread([&] { user->start(); }));
+    for (auto&& user : users) {
+        workers.emplace_back([&] { user->start(); });
         LOG_INFO("Worker {} started.", user->toString());
     }
-    for (auto &&worker : workers)
+    for (auto&& worker : workers)
         worker.join();
     return 0;
 }

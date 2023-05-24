@@ -4,16 +4,14 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
-namespace utils {
-namespace logging {
+namespace utils::logging {
 inline void initializeLogger()
 {
     auto console = spdlog::stdout_color_mt("console");
     auto err_logger = spdlog::stderr_color_mt("stderr");
     spdlog::set_level(spdlog::level::debug);
 }
-} // namespace logging
-} // namespace utils
+} // namespace utils::logging
 
 #define LOG_ERROR(...) spdlog::get("stderr")->error(__VA_ARGS__)
 #define LOG_WARN(...) spdlog::get("console")->warn(__VA_ARGS__)

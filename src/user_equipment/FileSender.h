@@ -9,8 +9,8 @@ class FileSender;
 
 class FileSender {
   public:
-    explicit FileSender(const std::string &file,
-                        const user_equipment::UserConnection &userConnection);
+    explicit FileSender(const std::string& file,
+                        const user_equipment::UserConnection& userConnection);
 
     auto sendNext() -> bool;
     auto userConnection() -> UserConnection { return _userConnection; }
@@ -21,7 +21,7 @@ class FileSender {
     std::unique_ptr<Poco::FileInputStream> _fis;
     std::unique_ptr<Poco::Net::SocketAddress> _socketAddress;
     std::unique_ptr<Poco::Net::DatagramSocket> _socket;
-    const size_t _bufferSize = 1024;
+    const int _bufferSize = 1024;
     std::unique_ptr<std::vector<char>> _buffer = std::make_unique<std::vector<char>>(_bufferSize);
 };
 } // namespace user_equipment

@@ -3,9 +3,9 @@
 #include <algorithm>
 #include <ranges>
 
-using namespace base_station;
+namespace bs = base_station;
 
-auto ConnectionPool::reserveConnection(const std::string &ueid, const std::string &filename)
+auto bs::ConnectionPool::reserveConnection(const std::string& ueid, const std::string& filename)
     -> std::optional<uint32_t>
 {
     if (maxClients_ <= reservedClients_.size()) {
@@ -17,11 +17,11 @@ auto ConnectionPool::reserveConnection(const std::string &ueid, const std::strin
     if (reservedClients_.contains(ueid) && reservedClients_[ueid] == maxConnections_) {
         LOG_INFO("Number of max connections of {} for client {} already reached!");
         LOG_DEBUG("Max connections: {}", maxConnections_);
-        LOG_DEBUG("Reserved connetions: {}", reservedClients_[ueid]);
+        LOG_DEBUG("Reserved connections: {}", reservedClients_[ueid]);
         return std::nullopt;
     }
     auto iter =
-        std::ranges::find_if(connections_, [](const std::shared_ptr<Connection> &connection) {
+        std::ranges::find_if(connections_, [](const std::shared_ptr<Connection>& connection) {
             return connection->isAvailable();
         });
     if (iter == connections_.end()) {
@@ -29,7 +29,7 @@ auto ConnectionPool::reserveConnection(const std::string &ueid, const std::strin
         return std::nullopt;
     }
 
-    auto &available = *iter;
+    auto& available = *iter;
     available->connect(ueid, filename);
     if (!reservedClients_.contains(ueid))
         reservedClients_[ueid] = 0;
@@ -38,10 +38,10 @@ auto ConnectionPool::reserveConnection(const std::string &ueid, const std::strin
     return available->udpPort();
 }
 
-auto ConnectionPool::releaseConnection(const std::string &ueid, const uint32_t udpPort) -> bool
+auto bs::ConnectionPool::releaseConnection(const std::string& ueid, const uint32_t udpPort) -> bool
 {
     auto toRelease =
-        std::ranges::find_if(connections_, [&](const std::shared_ptr<Connection> &connection) {
+        std::ranges::find_if(connections_, [&](const std::shared_ptr<Connection>& connection) {
             return !connection->isAvailable() && ueid == connection->ueid() &&
                    udpPort == connection->udpPort();
         });
@@ -59,9 +59,7 @@ auto ConnectionPool::releaseConnection(const std::string &ueid, const uint32_t u
     return true;
 }
 
-ConnectionPool::ConnectionPool(uint16_t maxConnections, uint16_t maxClients
-                               //    std::pair<uint32_t , uint32_t> portRange
-                               ) :
+bs::ConnectionPool::ConnectionPool(uint16_t maxConnections, uint16_t maxClients) :
     maxConnections_(maxConnections), maxClients_(maxClients)
 {
     auto totalConnections = maxConnections * maxClients;

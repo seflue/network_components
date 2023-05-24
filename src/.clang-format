@@ -7,6 +7,7 @@ UseTab: Never
 BreakBeforeBraces: Stroustrup
 AllowAllArgumentsOnNextLine: false
 BinPackArguments: false
+BinPackParameters: false
 SpaceBeforeCtorInitializerColon: true
 ConstructorInitializerIndentWidth: 4
 BreakBeforeInheritanceComma: false
@@ -14,3 +15,7 @@ BreakInheritanceList: AfterColon
 BreakConstructorInitializersBeforeComma: false
 BreakConstructorInitializers: AfterColon
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
+AllowAllParametersOfDeclarationOnNextLine: false
+ExperimentalAutoDetectBinPacking: false
+PointerAlignment: Left
+ReferenceAlignment: Left

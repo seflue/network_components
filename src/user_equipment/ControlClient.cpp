@@ -3,15 +3,14 @@
 #include "Logging.h"
 #include <grpcpp/create_channel.h>
 #include <ranges>
-#include <stdexcept>
 #include <string>
 
 namespace rv = std::ranges::views;
 using std::ranges::max_element;
 
-void user_equipment::ControlClient::scan(const std::string &ueid)
+void user_equipment::ControlClient::scan(const std::string& ueid)
 {
-    for (auto &channel : std::views::values(channels_)) {
+    for (auto& channel : std::views::values(channels_)) {
         control::ScanRequest request;
         request.set_ueid(ueid);
         control::ScanReply reply;
@@ -33,7 +32,7 @@ void user_equipment::ControlClient::scan(const std::string &ueid)
     }
 }
 
-void user_equipment::ControlClient::addChannel(const BaseStation &bs)
+void user_equipment::ControlClient::addChannel(const BaseStation& bs)
 {
     channels_[bs.grpcSocket] = Channel{
         control::ControlService::NewStub(
@@ -42,15 +41,7 @@ void user_equipment::ControlClient::addChannel(const BaseStation &bs)
         bs.quality};
 }
 
-auto user_equipment::ControlClient::connected(uint32_t udpPort) -> std::optional<Socket>
-{
-    if (userConnections_.contains(udpPort))
-        return userConnections_[udpPort];
-    else
-        return std::nullopt;
-}
-
-auto user_equipment::ControlClient::connect(const std::string &ueid, const std::string &filename)
+auto user_equipment::ControlClient::connect(const std::string& ueid, const std::string& filename)
     -> std::optional<UserConnection>
 {
     const auto best = bestChannel();
@@ -78,7 +69,7 @@ auto user_equipment::ControlClient::connect(const std::string &ueid, const std::
     }
 }
 
-void user_equipment::ControlClient::disconnect(const std::string &ueid, const UserConnection &conn)
+void user_equipment::ControlClient::disconnect(const std::string& ueid, const UserConnection& conn)
 {
     if (!channels_.contains(conn.grpcSocket)) {
         LOG_ERROR("No user connection to {}", conn.grpcSocket.toString());
@@ -89,14 +80,14 @@ void user_equipment::ControlClient::disconnect(const std::string &ueid, const Us
     request.set_dataport(conn.udpPort);
     control::DisconnectionReply reply;
     grpc::ClientContext context;
-    const auto &channel = channels_[conn.grpcSocket];
+    const auto& channel = channels_[conn.grpcSocket];
     auto status = channel.service->Disconnect(&context, request, &reply);
 }
 
-auto user_equipment::ControlClient::bestChannel() const -> const Channel *
+auto user_equipment::ControlClient::bestChannel() const -> const Channel*
 {
-    auto is_connectable = [](const Channel &c) { return c.quality.has_value(); };
-    auto quality_comparator = [](const Channel &c1, const Channel &c2) {
+    auto is_connectable = [](const Channel& c) { return c.quality.has_value(); };
+    auto quality_comparator = [](const Channel& c1, const Channel& c2) {
         return *c1.quality < *c2.quality;
     };
 

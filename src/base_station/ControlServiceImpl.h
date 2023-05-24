@@ -10,7 +10,6 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 
-#include "DTOs.h"
 #include "controlplane.grpc.pb.h"
 
 #include "Connection.h"
@@ -32,25 +31,24 @@ using grpc::Status;
 using base_station::Connection;
 using base_station::ConnectionPool;
 using base_station::QualityGenerator;
-using base_station::State;
 
 class ControlServiceImpl final : public ControlService::Service {
 
-    Status Scan(ServerContext *context, const ScanRequest *request, ScanReply *reply) override;
+    Status Scan(ServerContext* context, const ScanRequest* request, ScanReply* reply) override;
 
-    Status Connect(ServerContext *context, const ConnectionRequest *request,
-                   ConnectionReply *reply) override;
+    Status Connect(ServerContext* context,
+                   const ConnectionRequest* request,
+                   ConnectionReply* reply) override;
 
-    Status Disconnect(ServerContext *context, const DisconnectionRequest *request,
-                      DisconnectionReply *reply) override;
+    Status Disconnect(ServerContext* context,
+                      const DisconnectionRequest* request,
+                      DisconnectionReply* reply) override;
 
-    std::shared_ptr<State> state_;
     std::unique_ptr<ConnectionPool> connectionPool_;
     QualityGenerator qualityGenerator_;
 
   public:
-    explicit ControlServiceImpl(const std::shared_ptr<State> &state,
-                                std::unique_ptr<ConnectionPool> pool);
+    explicit ControlServiceImpl(std::unique_ptr<ConnectionPool> pool);
 };
 
 #endif // NETWORK_COMPONENTS_CONTROLSERVICEIMPL_H

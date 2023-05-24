@@ -14,19 +14,17 @@ namespace user_equipment {
 
 class ControlClient {
   public:
-    void addChannel(const BaseStation &bs);
-    auto connected(uint32_t udpPort) -> std::optional<Socket>;
+    void addChannel(const BaseStation& bs);
 
-    void scan(const std::string &ueid);
-    auto connect(const std::string &ueid, const std::string &filename)
+    void scan(const std::string& ueid);
+    auto connect(const std::string& ueid, const std::string& filename)
         -> std::optional<UserConnection>;
-    void disconnect(const std::string &ueid, const UserConnection &userConnection);
+    void disconnect(const std::string& ueid, const UserConnection& userConnection);
 
   private:
-    auto bestChannel() const -> const Channel *;
-    std::string ueid;
+    [[nodiscard]] auto bestChannel() const -> const Channel*;
+    std::string _ueid;
     std::map<Socket, Channel> channels_;
-    std::map<uint32_t, Socket> userConnections_;
 };
 
 } // namespace user_equipment

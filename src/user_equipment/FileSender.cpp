@@ -3,8 +3,8 @@
 
 #include "Logging.h"
 
-user_equipment::FileSender::FileSender(const std::string &file,
-                                       const UserConnection &userConnection) :
+user_equipment::FileSender::FileSender(const std::string& file,
+                                       const UserConnection& userConnection) :
     _userConnection(userConnection),
     _file(file),
     _fis(std::make_unique<Poco::FileInputStream>(file)),
@@ -24,10 +24,10 @@ auto user_equipment::FileSender::sendNext() -> bool
 
     _fis->read(_buffer->data(), _bufferSize);
     try {
-        _socket->sendBytes(_buffer->data(), _fis->gcount());
+        _socket->sendBytes(_buffer->data(), static_cast<int>(_fis->gcount()));
         LOG_DEBUG("Send {} bytes", _fis->gcount());
     }
-    catch (const Poco::Exception &ex) {
+    catch (const Poco::Exception& ex) {
         LOG_ERROR("Error sending file: {}", ex.displayText());
     }
     return true;

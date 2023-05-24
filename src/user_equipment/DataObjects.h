@@ -5,19 +5,17 @@
 #include <string>
 
 namespace user_equipment {
-class Socket;
-std::string to_string(const user_equipment::Socket &socket);
 
 struct Socket {
     std::string ip;
     uint32_t port;
-    std::string toString() const;
-    bool operator<(const Socket &rhs) const { return this->toString() < rhs.toString(); }
+    [[nodiscard]] std::string toString() const;
+    bool operator<(const Socket& rhs) const { return this->toString() < rhs.toString(); }
 };
 
 struct BaseStation {
     Socket grpcSocket;
-    int quality;
+    int quality{};
 };
 
 struct Channel {
@@ -28,7 +26,7 @@ struct Channel {
 
 struct UserConnection {
     Socket grpcSocket;
-    uint32_t udpPort;
+    uint32_t udpPort{};
 };
 } // namespace user_equipment
 

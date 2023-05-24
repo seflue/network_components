@@ -15,10 +15,10 @@ class ConnectionPool {
     //                std::pair<uint32_t , uint32_t> portRange);
     explicit ConnectionPool(uint16_t maxConnections, uint16_t maxClients);
 
-    auto reserveConnection(const std::string &ueid, const std::string &filename)
+    auto reserveConnection(const std::string& ueid, const std::string& filename)
         -> std::optional<uint32_t>;
 
-    bool releaseConnection(const std::string &ueid, const uint32_t udpPort);
+    bool releaseConnection(const std::string& ueid, uint32_t udpPort);
 
   private:
     std::vector<std::shared_ptr<Connection>> connections_;

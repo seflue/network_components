@@ -11,7 +11,7 @@ template <uint32_t N> class CoinOrDice {
   public:
     CoinOrDice() : distribution(1u, N) {}
 
-    void setDistribution(const std::vector<double> &probabilities)
+    void setDistribution(const std::vector<double>& probabilities)
     {
         if (probabilities.size() != N) {
             // Invalid probabilities vector size
@@ -23,7 +23,7 @@ template <uint32_t N> class CoinOrDice {
         double sum =
             std::accumulate(normalizedProbabilities.begin(), normalizedProbabilities.end(), 0.0);
         if (sum > 0.0) {
-            for (double &probability : normalizedProbabilities) {
+            for (double& probability : normalizedProbabilities) {
                 probability /= sum;
             }
         }

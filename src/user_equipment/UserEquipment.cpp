@@ -6,18 +6,21 @@
 #include <grpcpp/grpcpp.h>
 #include <spdlog/spdlog.h>
 
-user_equipment::UserEquipment::UserEquipment(const std::string &name, const std::string &ueid,
-                                             const std::vector<BaseStation> &baseStations)
+namespace ue = user_equipment;
+
+ue::UserEquipment::UserEquipment(const std::string& name,
+                                 const std::string& ueid,
+                                 const std::vector<BaseStation>& baseStations)
 {
     this->_name = name;
     this->_ueid = ueid;
-    for (const auto &bs : baseStations)
+    for (const auto& bs : baseStations)
         _controlBand.addChannel(bs);
     _timer = std::make_unique<Timer>();
     _dataHandler = std::make_unique<DataHandler>(ueid);
 }
 
-void user_equipment::UserEquipment::start()
+void ue::UserEquipment::start()
 {
     while (true) {
         updateBsInfo();
@@ -27,13 +30,13 @@ void user_equipment::UserEquipment::start()
     }
 }
 
-void user_equipment::UserEquipment::shutdown()
+void ue::UserEquipment::shutdown()
 {
     _isShutdownSent = true;
     LOG_DEBUG("Gracefully shutdown {{ {} : {} }}", _name, _ueid);
 }
 
-void user_equipment::UserEquipment::updateBsInfo()
+void ue::UserEquipment::updateBsInfo()
 {
     if (!_timer->isExceeded())
         return;
@@ -42,9 +45,9 @@ void user_equipment::UserEquipment::updateBsInfo()
     _controlBand.scan(_ueid);
 }
 
-bool user_equipment::UserEquipment::handleShutdown() { return _isShutdownSent; }
+bool ue::UserEquipment::handleShutdown() const { return _isShutdownSent; }
 
-void user_equipment::UserEquipment::handleUserData()
+void ue::UserEquipment::handleUserData()
 {
     auto userData = _userdataGenerator.generate();
     if (userData)
@@ -52,13 +55,10 @@ void user_equipment::UserEquipment::handleUserData()
     _dataHandler->handleData(_controlBand);
 }
 
-auto user_equipment::UserEquipment::toString() -> std::string
-{
-    return std::format("{} : {}", _name, _ueid);
-}
+auto ue::UserEquipment::toString() -> std::string { return std::format("{} : {}", _name, _ueid); }
 
-auto user_equipment::Timer::now() -> tp { return std::chrono::system_clock::now(); }
+auto ue::Timer::now() -> tp { return std::chrono::system_clock::now(); }
 
-void user_equipment::Timer::reset() { start_time = now(); }
+void ue::Timer::reset() { start_time = now(); }
 
-auto user_equipment::Timer::isExceeded() -> bool { return now() - duration > start_time; }
+auto ue::Timer::isExceeded() -> bool { return now() - duration > start_time; }

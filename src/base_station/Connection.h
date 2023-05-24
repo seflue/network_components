@@ -17,7 +17,6 @@ using Notification = Poco::AutoPtr<Poco::Net::ReadableNotification>;
 
 class Connection {
   public:
-    explicit Connection() : _file(), _reactor(nullptr), _socket(nullptr) {}
     void connect(std::string ueid, std::string filename);
     void disconnect();
     bool isAvailable() const;
@@ -27,11 +26,12 @@ class Connection {
 
   private:
     void start();
+    void stop();
     auto openFile() -> bool;
     void closeFile();
-    void onSocketReadable(const Notification &n);
+    void onSocketReadable(const Notification& n);
     void runReactor();
-    void stop();
+    void stopReactor();
 
     std::string _filename;
     std::string _fullFilePath;
