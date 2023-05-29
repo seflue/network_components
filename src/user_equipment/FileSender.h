@@ -1,3 +1,6 @@
+#ifndef NETWORK_COMPONENTS_FILESENDER_H
+#define NETWORK_COMPONENTS_FILESENDER_H
+
 #include "DataObjects.h"
 #include <Poco/FileStream.h>
 #include <Poco/Net/DatagramSocket.h>
@@ -5,8 +8,6 @@
 #include <string>
 
 namespace user_equipment {
-class FileSender;
-
 class FileSender {
   public:
     explicit FileSender(const std::string& file,
@@ -25,3 +26,5 @@ class FileSender {
     std::unique_ptr<std::vector<char>> _buffer = std::make_unique<std::vector<char>>(_bufferSize);
 };
 } // namespace user_equipment
+
+#endif // NETWORK_COMPONENTS_FILESENDER_H

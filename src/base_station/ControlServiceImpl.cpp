@@ -1,6 +1,8 @@
 #include "ControlServiceImpl.h"
+#include "DataConsumer.h"
+#include "FileConsumer.h"
 #include "Logging.h"
-#include <Poco/Net/SocketNotification.h>
+#include <memory>
 
 using namespace base_station;
 
@@ -9,7 +11,7 @@ Status ControlServiceImpl::Scan([[maybe_unused]] ServerContext* context,
                                 ScanReply* reply)
 {
     LOG_DEBUG("Received 'Scan' from {}", request->ueid());
-    reply->set_quality(qualityGenerator_.generate());
+    reply->set_quality(_qualityGenerator.generate());
     return Status::OK;
 }
 
@@ -20,8 +22,8 @@ Status ControlServiceImpl::Connect([[maybe_unused]] ServerContext* context,
     auto ueid = request->ueid();
     auto filename = request->filename();
     LOG_DEBUG("Received 'Connect' from {}:{}", ueid, filename);
-
-    auto udpPort = connectionPool_->reserveConnection(ueid, filename);
+    auto udpPort =
+        _connectionPool->reserveConnection(ueid, std::make_unique<FileConsumer>(_serviceId, filename));
     if (!udpPort) {
         reply->set_success(false);
         reply->set_error(control::CONNECTION_NO_SOCKET_FREE);
@@ -37,8 +39,9 @@ Status ControlServiceImpl::Connect([[maybe_unused]] ServerContext* context,
     }
 }
 
-ControlServiceImpl::ControlServiceImpl(std::unique_ptr<ConnectionPool> pool) :
-    connectionPool_(std::move(pool))
+ControlServiceImpl::ControlServiceImpl(std::unique_ptr<ConnectionPool> pool, std::string serviceId) :
+    _connectionPool(std::move(pool)),
+    _serviceId(std::move(serviceId))
 {
 }
 
@@ -47,7 +50,7 @@ Status ControlServiceImpl::Disconnect([[maybe_unused]] ServerContext* context,
                                       DisconnectionReply* reply)
 {
     LOG_DEBUG("Received 'Disconnect' from {}:{}", request->ueid(), request->dataport());
-    auto success = connectionPool_->releaseConnection(request->ueid(), request->dataport());
+    auto success = _connectionPool->releaseConnection(request->ueid(), request->dataport());
     if (!success)
         LOG_WARN("Could not release connection for {}:{}", request->ueid(), request->dataport());
     reply->set_success(success);

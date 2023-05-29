@@ -33,7 +33,6 @@ using base_station::ConnectionPool;
 using base_station::QualityGenerator;
 
 class ControlServiceImpl final : public ControlService::Service {
-
     Status Scan(ServerContext* context, const ScanRequest* request, ScanReply* reply) override;
 
     Status Connect(ServerContext* context,
@@ -44,11 +43,12 @@ class ControlServiceImpl final : public ControlService::Service {
                       const DisconnectionRequest* request,
                       DisconnectionReply* reply) override;
 
-    std::unique_ptr<ConnectionPool> connectionPool_;
-    QualityGenerator qualityGenerator_;
+    std::unique_ptr<ConnectionPool> _connectionPool;
+    QualityGenerator _qualityGenerator;
+    std::string _serviceId;
 
   public:
-    explicit ControlServiceImpl(std::unique_ptr<ConnectionPool> pool);
+    explicit ControlServiceImpl(std::unique_ptr<ConnectionPool> pool, std::string serviceId);
 };
 
 #endif // NETWORK_COMPONENTS_CONTROLSERVICEIMPL_H

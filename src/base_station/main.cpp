@@ -76,7 +76,7 @@ class BaseStation : public Poco::Util::ServerApplication {
             Poco::Util::Option("grpc-port", "p")
                 .required(false)
                 .repeatable(false)
-                .argument("grpcPort")
+                .argument("grpcPort", true)
                 .binding("grpcPort")
                 .description("IP address")
                 .callback(
@@ -119,7 +119,7 @@ class BaseStation : public Poco::Util::ServerApplication {
         uint32_t maxConnections = 2;
         uint32_t maxClients = 2;
         auto connectionPool = std::make_unique<ConnectionPool>(maxConnections, maxClients);
-        ControlServiceImpl service(std::move(connectionPool));
+        auto service = ControlServiceImpl(std::move(connectionPool), _ip);
 
         grpc::EnableDefaultHealthCheckService(true);
         grpc::reflection::InitProtoReflectionServerBuilderPlugin();

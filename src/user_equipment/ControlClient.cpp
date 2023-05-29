@@ -27,6 +27,7 @@ void user_equipment::ControlClient::scan(const std::string& ueid)
             channel.quality = reply.quality();
         }
         else {
+            channel.quality = 0;
             LOG_ERROR("{}: {}", static_cast<int>(status.error_code()), status.error_message());
         }
     }

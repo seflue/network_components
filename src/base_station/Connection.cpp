@@ -1,32 +1,28 @@
+#include "Connection.h"
+#include "FileConsumer.h"
 #include "Logging.h"
 #include <Poco/NObserver.h>
 #include <Poco/Net/DatagramSocket.h>
 #include <Poco/Net/SocketAddress.h>
 #include <Poco/Net/SocketNotification.h>
 #include <Poco/Net/SocketReactor.h>
-#include <filesystem>
-#include <fstream>
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include <utility>
 
-#include "Connection.h"
-
 namespace bs = base_station;
-namespace fs = std::filesystem;
 using SocketObserver = Poco::NObserver<bs::Connection, Poco::Net::ReadableNotification>;
 
-void bs::Connection::connect(std::string ueid, std::string filename)
+void bs::Connection::connect(std::string ueid, std::unique_ptr<DataConsumer> dataConsumer)
 {
     if (_connected) {
-        LOG_ERROR("Connection to send {} from {} is already connected to {}",
-                  filename,
+        LOG_ERROR("Connection from {} is already connected to {}",
                   ueid,
                   _socket->address().toString());
         return;
     }
     _ueid = std::move(ueid);
-    _filename = std::move(filename);
+    _dataConsumer = std::move(dataConsumer);
     start();
 }
 
@@ -42,7 +38,7 @@ void bs::Connection::start()
 {
     try {
         openSocket();
-        openFile();
+        _dataConsumer->open(_ueid);
         startReactor();
         _connected = true;
     }
@@ -54,7 +50,7 @@ void bs::Connection::start()
 void bs::Connection::stop()
 {
     stopReactor();
-    closeFile();
+    _dataConsumer->close();
 }
 
 void bs::Connection::startReactor()
@@ -78,27 +74,6 @@ void bs::Connection::openSocket()
 
 bool bs::Connection::isAvailable() const { return !_connected && !_receiver.joinable(); }
 
-auto bs::Connection::openFile() -> bool
-{
-    auto filePath = fs::path(_filename);
-    auto directoryPath = filePath.parent_path();
-    auto fullDirPath = _ueid + "/" + directoryPath.string();
-
-    if (!fs::exists(fullDirPath) && !fs::create_directories(fs::path(fullDirPath))) {
-        LOG_ERROR("Failed to create directory: {}", fullDirPath);
-        return false;
-    }
-
-    _fullFilePath = fullDirPath + "/" + filePath.filename().string();
-    _file = std::ofstream(_fullFilePath, std::ios::binary);
-    if (!_file.is_open()) {
-        LOG_ERROR("Failed to open file {}", _fullFilePath);
-        return false;
-    }
-    LOG_DEBUG("File {} successfully opened.", _fullFilePath);
-    return true;
-}
-
 void bs::Connection::onSocketReadable(const Notification& n)
 {
     LOG_DEBUG("Notification {} from Socket {}", n->socket().address().toString(), n->name());
@@ -111,20 +86,7 @@ void bs::Connection::onSocketReadable(const Notification& n)
             _socket->receiveFrom(buffer.data(), static_cast<int>(buffer.size()), sender);
         LOG_DEBUG("Received {} bytes from {}", bytesRead, sender.toString());
         LOG_DEBUG("Buffer data: {}", std::string(buffer.begin(), buffer.begin() + bytesRead));
-
-        if (bytesRead > 0) {
-            if (!_file.is_open())
-                LOG_ERROR("File not open, opening at {}", _fullFilePath);
-            else if (_file.write(buffer.data(), bytesRead)) {
-                LOG_DEBUG("{} bytes written successfully", bytesRead);
-                if (_file.fail())
-                    LOG_DEBUG("File status: fail");
-                if (_file.bad())
-                    LOG_DEBUG("File status: bad");
-            }
-            else
-                LOG_ERROR("Error wile writing to file");
-        }
+        _dataConsumer->consume(buffer.data(), bytesRead);
     }
     catch (const Poco::Exception& ex) {
         LOG_ERROR("Error receiving data: {}", ex.displayText());
@@ -158,11 +120,4 @@ void bs::Connection::stopReactor()
 
     LOG_DEBUG("{}: Join reactor thread", toString());
     _reactorThread.join();
-}
-
-void bs::Connection::closeFile()
-{
-    LOG_DEBUG("Close file.");
-    _file.flush();
-    _file.close();
 }

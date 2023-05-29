@@ -19,12 +19,14 @@ void DataHandler::handleData(ControlClient& controlClient)
         file = nextItem();
         if (!std::ifstream(file).good()) {
             LOG_ERROR("File {} not found!", file);
+            queueData(file);
             return;
         }
 
         auto userConnection = controlClient.connect(ueid, file);
         if (!userConnection) {
             LOG_ERROR("Cannot establish user connection.");
+            queueData(file);
             return;
         }
 
@@ -36,6 +38,7 @@ void DataHandler::handleData(ControlClient& controlClient)
         }
         catch (Poco::FileNotFoundException& e) {
             LOG_ERROR("Poco Exception: File {} not found!", file);
+            queueData(file);
             return;
         }
         catch (Poco::Net::HostNotFoundException& e) {
@@ -44,6 +47,7 @@ void DataHandler::handleData(ControlClient& controlClient)
                       userConnection->grpcSocket.ip,
                       userConnection->udpPort);
             sleep(1);
+            queueData(file);
             return;
         }
     }

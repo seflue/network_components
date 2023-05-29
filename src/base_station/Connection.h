@@ -13,11 +13,12 @@
 
 namespace base_station {
 class Connection;
+class DataConsumer;
 using Notification = Poco::AutoPtr<Poco::Net::ReadableNotification>;
 
 class Connection {
   public:
-    void connect(std::string ueid, std::string filename);
+    void connect(std::string ueid, std::unique_ptr<DataConsumer> dataConsumer);
     void disconnect();
     bool isAvailable() const;
     std::string ueid() const { return _ueid; }
@@ -27,12 +28,11 @@ class Connection {
   private:
     void start();
     void stop();
-    auto openFile() -> bool;
-    void closeFile();
     void onSocketReadable(const Notification& n);
     void runReactor();
     void stopReactor();
 
+    std::unique_ptr<DataConsumer> _dataConsumer;
     std::string _filename;
     std::string _fullFilePath;
     std::ofstream _file;
