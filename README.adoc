@@ -71,23 +71,25 @@ deactivate BS
 
 An application loop invokes all necessary methods in a sequence.
 
-```Cpp
+[source,Cpp]
+----
 while(true)
 {
    updateBSInfo();
    sendUserData();
 }
-```
+----
 
 To send periodic messages, a _timer gets started and is checked in every iteration of the main loop, if it has expired. The _timer internally just stores a timestamp. `isExpired` just measures the delta between the stored timestamp and the current time and checks, if it is greater than a defined period. Reset sets the timestamp to the current time.
 
 When the _timer is exceeded, a paging message is sent. This behavior could be encapsulated behind `updateBSInfo`.
 
-To actually send user data, we need to know, if there is data, which actually needs to be sent. Depending on the connection state and the available BS information, a UDP connection can be established and data gets sent. This behavior is encapsulated behind `sendUserData`.
+To actually send user data, we need to know if there is data, which actually needs to be sent. Depending on the connection state and the available BS information, a UDP connection can be established and data gets sent. This behavior is encapsulated behind `sendUserData`.
 
-To close all connections on shutdown of UE, the signals need to be catched and a callback which handles the graceful shutdown needs to be registered.
+To close all connections on shutdown of UE, the signals need to be caught and a callback which handles the graceful shutdown needs to be registered.
 
-```Cpp
+[source,Cpp]
+----
 void graceful_shutdown(int signum) {
     // close all existing connections
     exit(signum);
@@ -95,7 +97,7 @@ void graceful_shutdown(int signum) {
 
 signal(SIGINT, graceful_shutdown);
 signal(SIGTERM, graceful_shutdown);
-```
+----
 
 ===== Diagrams (WIP)
 
@@ -153,13 +155,8 @@ to Deutsche Telekom infrastructure.
 2. Multiple UEs could establish connections to the BS and HSS simultaneously.
 3. The Connection Request message shall include UEID which is different from IMSI. IMSI is
 encrypted in the message and cannot be decrypted in BS. Only HSS can decrypt it. UEID is
-a UE specific information and it should be located in each message that BS could
+a UE specific information, and it should be located in each message that BS could
 understand the relation between UE and HSS. (not must)
 4. The UE might have different kinds of agreements like prioritization. (not must)
 
 Content entered directly below the header but before the first section heading is called the preamble.
-
-== System Design
-
-=== Components
-=== Communication

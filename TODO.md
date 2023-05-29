@@ -1,37 +1,68 @@
 # TODO
+## Done
 - [x] configure CLion WSL build with CMake
 - [x] include grpc and POCO
 - [x] get simplest GRPC communication up and running
 - [x] initialize git repo
 - [x] initially design interaction between controlBand and user plane
- 
-- [ ] implement multiple base stations
+- [x] implement multiple user equipment
   - [x] make station a struct with address string and quality as int
   - [x] allow multiple stations within UserEquipment
     - [x] adjust class structure and construction
     - [x] adjust scan method
-    - [ ] repair broken channel construction
-  - [ ] start multiple base stations
-- [ ] implement user plane
-  - [x] make Poco headers successfully available
-  - [ ] add DataHandler, 
-    - [x] checks, if data is available (return random value)
-  - [ ] implement simple UDP data transfer
-- [ ] Cleanup build
-  - [ ] Cleanup docker build
-    - [x] remove bincrafters remote
-    - [ ] pass existing conanfile.txt to conan_cmake_configure
-  - [ ] cleanup build scripts
-    - [ ] Write documentation for build.sh
-    - [ ] Exchange Wsl env parameter option with something more windows agnostic
-  - [ ] consolidate CLion build
-    - [ ] repair conan cmake lookup when called from CLion
-    - [ ] use preset files to persist CLion CMake configuration
-- [ ] remove busy-waiting for timer checking
+    - [x] repair broken channel construction
+- [x] repair build: use GCC 10 or higher, repair g++ and gcc update alternatives
+- [x] extend control plane with connect and disconnect messages
+  - [x] implement "Connect"
+    - [x] implement client side
+      - [x] wrap client protocol in ControlClient
+      - [x] send connect request before creating sender
+      - [x] send disconnect request after file has been completely sent
+      - [x] fix segfault on client side
+    - [x] put filename into request at client side
+    - [x] read filename from request at server side
+    - [x] fix connection pool client availability
+  - [x] implement "Disconnect"
+    - [x] implement client side
+    - [x] implement server side
+- [x] implement user plane
+  - [x] implement simple UDP data transfer
+    - [x] make Poco headers successfully available
+    - [x] implement client side
+    - [x] implement server side
+  - [x] fix Poco::IOException within receiveData (socket.bind)
+  - [x] replace couts with sane logging library
+  - [x] implement asynchronous socket reading on server side
+    - [x] fix issue with not getting notified about readable socket
+    - [x] fix issue with not writing successfully to file
+- [x] implement dynamic quality
+  - [x] Make quality in Protobuf protocol an int
+  - [x] implement quality generator as separate thread
+- [x] add DataConsumer,
+  - [x] checks, if data is available (return random value)
+- [x] add clang-format configuration
+- [x] Move source into src folder
+- [x] install gcc-13 in docker or use gcc-13 ready base container
+- [x] repair docker build: use conan protoc instead of /usr/bin/protoc
+- [x] create multiple processes
+- [x] allow multiple user connections
+- [x] implement multiple base stations
+  - [x] start multiple base stations via IDE configuration
+  - [x] implement startup script to fire up a zoo of base stations
+## Next
+- [ ] remove busy-waiting for _timer checking
   - [ ] evaluate using a state machine
-  - [ ] move timer into ControlClient and start scanning as separate thread
-- [ ] make channel part of UE instance
-- [ ] parallelize connection (parallel std::for_each)
-- [ ] implement "Connect"
-- [ ] fix conditional include in CMakeLists.txt
-- [ ] add clang-format configuration
+  - [ ] move _timer into ControlClient and start scanning as separate thread
+- [ ] improve startup script to also create zoo of user equipments
+- [ ] implement state machine for user equipment
+- [ ] Cleanup ConnectionPool
+  - [ ] Create and erase connections on the fly instead of pre-creation
+- [ ] Cleanup docker build
+  - [x] remove bincrafters remote
+  - [ ] pass existing conanfile.txt to conan_cmake_configure
+- [ ] cleanup build scripts
+  - [x] Write documentation for build.sh
+  - [ ] Exchange Wsl env parameter option with something more windows agnostic
+- [ ] consolidate CLion build
+  - [x] repair conan cmake lookup when called from CLion
+  - [ ] use preset files to persist CLion CMake configuration
